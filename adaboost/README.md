@@ -10,7 +10,7 @@ PS：作为学习笔记，这里按照我学习之后的通俗理解来写，欢
 ---------------------
 
 ## 2.算法伪代码
-![](adaboost.jpg)
+![](https://github.com/ito-integral/sk_learn_note/blob/master/adaboost/adaboost.jpg)
 
 
 -------------------------
