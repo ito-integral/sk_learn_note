@@ -6,6 +6,7 @@ Created on Fri Jul 24 17:19:02 2020
 """
 import numpy as np
 import math
+import matplotlib.pyplot as plt
 
 def stumpClassify(dataMatrix, dimen, threshVal, threshIneq):
     """dataMatrix 是数据特征矩阵，dimen:是对应的特征列，threshVal:是阈值，
@@ -38,7 +39,7 @@ def buildStump(dataArr, classLabels, D):
                 errArr = np.mat(np.ones((m,1)))
                 errArr[predictedVals == labelMat] = 0
                 weightedError = D.T*errArr
-                print("split: dim %d, thresh %.3f, thresh inequal: %s the weighted error is %.3f " % (i, val, inequal, weightedError))
+                #print("split: dim %d, thresh %.3f, thresh inequal: %s the weighted error is %.3f " % (i, val, inequal, weightedError))
                 if weightedError < minError and weightedError <= 0.5: #错误率要小于50%,这样的分类器才有意义
                     minError = weightedError
                     bestClasEst = predictedVals.copy()
@@ -62,20 +63,20 @@ def adaBoostTrainDS(dataArr, classLabels, numIt = 40):
     for i in range(numIt):
         if buildStump(dataArr, classLabels, D):
             bestStump, error, classEst = buildStump(dataArr, classLabels, D)
-            print("D:",D.T)
+            #print("D:",D.T)
             alpha = float(0.5*math.log((1.0-error)/max(error,1e-16)))  #为了确保分母不为0
             bestStump['alpha'] = alpha  #这步其实不必要,只是为了说明一个弱训练器对应一个新的alpha值
             weakClassArr.append(bestStump)
-            print("classEst:",classEst.T)
+            #print("classEst:",classEst.T)
             expon = np.multiply(-1*alpha*np.mat(classLabels).T, classEst)  #e上的指数
             D = np.multiply(D,np.exp(expon))  #迭代新的概率分布的系数
             D = D/D.sum()  #规范化称为概率分布
         else: break
         aggClassEst += alpha * classEst  #这一步相当于是加法加权弱分类器的分类结果
-        print("aggClassEst:",aggClassEst.T)
+        #print("aggClassEst:",aggClassEst.T)
         aggErrors = np.multiply(np.sign(aggClassEst) != np.mat(classLabels).T, np.ones((m,1)))
         errorRate = aggErrors.sum()/m
-        print("total error: ",errorRate,"\n")
+        #print("total error: ",errorRate,"\n")
         if errorRate == 0.0: break
     return weakClassArr
         
@@ -88,8 +89,29 @@ def adaClassify(datToClass,classifierArr):
         classEst = stumpClassify(dataMatrix,classifierArr[i]['dim'], 
                                  classifierArr[i]['thresh'], classifierArr[i]['ineq'])
         aggClassEst += classifierArr[i]['alpha']*classEst
-        print(aggClassEst)
+        #print(aggClassEst)
     return np.sign(aggClassEst)
+
+
+
+def plot_dataset(X, y, ax,axes):
+    y = np.array(y)
+    ax.scatter(X[y==1][:,0], X[y==1][:,1], marker="+")
+    ax.scatter(X[y==-1][:,0], X[y==-1][:,1], marker="_")
+    ax.grid()
+    ax.axis(axes)
+    
+    
+def plot_cla_boundary(classifierArr,ax,axes):
+    x0s = np.linspace(axes[0], axes[1] , 200)
+    x1s = np.linspace(axes[2], axes[3], 200)
+    x0, x1 = np.meshgrid(x0s, x1s)
+    X = np.c_[x0.ravel(), x1.ravel()]
+    y_pred = adaClassify(X, classifierArr)
+    y_pred = y_pred.reshape(x0.shape)
+    ax.contourf(x0, x1, y_pred, cmap=plt.cm.brg, alpha=0.1)
+
+
     
 
 
@@ -123,13 +145,24 @@ def main():
     classLabels = [1,1,1,1,1,1,1,1,-1,-1,-1,-1,-1,-1,-1,-1,-1]
     D = np.mat(np.ones((17,1))/17)   #列向量
     bestStump,minError,bestClasEst = buildStump(dataArr, classLabels, D)
-    print(bestStump,minError)
-    print(bestClasEst)
+    #print(bestStump,minError)
+    #print(bestClasEst)
     classifierArr = adaBoostTrainDS(dataArr, classLabels, numIt = 11)
     #下面的是例子
     pre_class = adaClassify([0.3,0.5], classifierArr)
-    print(pre_class)
-
+    #print(pre_class)
+    #下面是对应基分类器的边界,分别是3,5,11个基分类器
+    
+    for itnum,each in zip([3,5,11],[1,2,3]):
+        ax = plt.subplot(3,1,each)
+        ax.set_yticks([0, 0.2, 0.4, 0.6,0.8])
+        ax.set_xticks([0, 0.2, 0.4, 0.6,0.8,1])
+        classifierArr = adaBoostTrainDS(dataArr, classLabels, numIt = itnum)
+        plot_cla_boundary(classifierArr, ax,[0, 1, 0, 1])
+        plot_dataset(dataArr, classLabels,ax, [0, 1, 0, 1])
+        plt.show()
+    
+    
     
 if __name__ == "__main__":
     main()
