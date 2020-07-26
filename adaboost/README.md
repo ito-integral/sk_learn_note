@@ -10,12 +10,14 @@ PS：作为学习笔记，这里按照我学习之后的通俗理解来写，欢
 ---------------------
 
 ## 2.算法伪代码
-![](https://github.com/ito-integral/sk_learn_note/blob/master/adaboost/adaboost.jpg)
+![](D:\机器学习\sk_learn_note\adaboost\adaboost.jpg)
 
 
 -------------------------
 ## 3.算法推导  
-损失函数: $$ a+b=\mu  $$
+损失函数: 
 
-	
+
+
+​	
 
